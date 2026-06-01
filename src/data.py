@@ -24,7 +24,7 @@ def load_property_prices() -> pd.DataFrame:
     try:
         return pd.read_sql(
             """
-            SELECT county, year, month, price_index, source
+            SELECT county, property_type, year, month, price_index, source
             FROM property_prices
             WHERE price_index IS NOT NULL
             """,
