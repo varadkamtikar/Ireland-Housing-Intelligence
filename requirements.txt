@@ -1,0 +1,13 @@
+streamlit
+pandas
+numpy
+plotly
+sqlalchemy
+psycopg2-binary
+python-dotenv
+requests
+scikit-learn
+xgboost
+geopandas
+folium
+streamlit-folium
