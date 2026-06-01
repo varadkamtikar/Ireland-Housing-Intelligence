@@ -2,47 +2,57 @@ import pandas as pd
 from sqlalchemy import text
 from src.db import engine
 
-sample_data = [
-    {
-        "county": "Dublin",
-        "area": "Dublin",
-        "year": 2025,
-        "quarter": "Q1",
-        "average_rent": 2100,
-        "source": "RTB"
-    },
-    {
-        "county": "Cork",
-        "area": "Cork",
-        "year": 2025,
-        "quarter": "Q1",
-        "average_rent": 1650,
-        "source": "RTB"
-    },
-    {
-        "county": "Galway",
-        "area": "Galway",
-        "year": 2025,
-        "quarter": "Q1",
-        "average_rent": 1500,
-        "source": "RTB"
-    }
-]
+CSV_PATH = "data/raw/rtb.csv"
 
-df = pd.DataFrame(sample_data)
+def load_rtb_data():
+    df = pd.read_csv(CSV_PATH, low_memory=False)
 
-with engine.connect() as conn:
-    for _, row in df.iterrows():
-        conn.execute(
-            text("""
-                INSERT INTO rental_prices
-                (county, area, year, quarter, average_rent, source)
-                VALUES
-                (:county, :area, :year, :quarter, :average_rent, :source)
-            """),
-            row.to_dict()
-        )
+    df = df[
+        [
+            "Year",
+            "Number of Bedrooms",
+            "Property Type",
+            "C03004V03625",
+            "Location",
+            "UNIT",
+            "VALUE",
+        ]
+    ].copy()
 
-    conn.commit()
+    df = df.rename(
+        columns={
+            "Year": "year",
+            "Number of Bedrooms": "bedrooms",
+            "Property Type": "property_type",
+            "C03004V03625": "location_code",
+            "Location": "location",
+            "UNIT": "unit",
+            "VALUE": "average_rent",
+        }
+    )
 
-print("Data inserted successfully!")
+    df["average_rent"] = pd.to_numeric(df["average_rent"], errors="coerce")
+    df["year"] = pd.to_numeric(df["year"], errors="coerce")
+
+    df = df.dropna(subset=["year", "location", "average_rent"])
+
+    df["year"] = df["year"].astype(int)
+    df["source"] = "RTB Average Monthly Rent Report"
+
+    with engine.connect() as conn:
+        conn.execute(text("DELETE FROM rental_prices;"))
+        conn.commit()
+
+    df.to_sql(
+        "rental_prices",
+        engine,
+        if_exists="append",
+        index=False,
+        method="multi",
+        chunksize=5000,
+    )
+
+    print(f"Inserted {len(df)} RTB rental records successfully!")
+
+if __name__ == "__main__":
+    load_rtb_data()
