@@ -4,11 +4,13 @@ from src.db import engine
 tables_sql = """
 CREATE TABLE IF NOT EXISTS rental_prices (
     id SERIAL PRIMARY KEY,
-    county VARCHAR(100),
-    area VARCHAR(255),
     year INTEGER,
-    quarter VARCHAR(10),
+    bedrooms VARCHAR(100),
+    property_type VARCHAR(150),
+    location_code VARCHAR(50),
+    location VARCHAR(255),
     average_rent NUMERIC(10,2),
+    unit VARCHAR(20),
     source VARCHAR(100),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
