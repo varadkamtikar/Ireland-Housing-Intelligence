@@ -1,32 +1,13 @@
 import streamlit as st
-import pandas as pd
 import plotly.express as px
-from src.db import engine
-
-st.set_page_config(
-    page_title="Rent Trends",
-    layout="wide"
-)
+from src.data import load_rental_data
 
 st.title("Rent Trends in Ireland")
 
-# Load data
-df = pd.read_sql(
-    """
-    SELECT
-        year,
-        bedrooms,
-        property_type,
-        location,
-        average_rent
-    FROM rental_prices
-    WHERE average_rent IS NOT NULL
-    """,
-    engine
-)
+df = load_rental_data()
 
 if df.empty:
-    st.warning("No rental data found in the database.")
+    st.warning("No rental data found. Check your database connection.")
     st.stop()
 
 # Sidebar filters
@@ -56,11 +37,15 @@ if selected_property_type != "All":
 if selected_bedrooms != "All":
     filtered_df = filtered_df[filtered_df["bedrooms"] == selected_bedrooms]
 
+if filtered_df.empty:
+    st.warning("No data matches the selected filters.")
+    st.stop()
+
 # KPIs
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:
-    st.metric("Total Records", len(filtered_df))
+    st.metric("Total Records", f"{len(filtered_df):,}")
 
 with col2:
     st.metric("Average Rent", f"€{filtered_df['average_rent'].mean():,.2f}")
@@ -89,7 +74,7 @@ fig_expensive = px.bar(
     x="average_rent",
     y="location",
     orientation="h",
-    title="Top 10 Most Expensive Rental Locations"
+    title="Top 10 Most Expensive Rental Locations",
 )
 
 st.plotly_chart(fig_expensive, use_container_width=True)
@@ -110,7 +95,7 @@ fig_cheapest = px.bar(
     x="average_rent",
     y="location",
     orientation="h",
-    title="Top 10 Cheapest Rental Locations"
+    title="Top 10 Cheapest Rental Locations",
 )
 
 st.plotly_chart(fig_cheapest, use_container_width=True)
@@ -118,22 +103,17 @@ st.plotly_chart(fig_cheapest, use_container_width=True)
 # Rent trend over time
 st.subheader("Average Rent Trend Over Time")
 
-trend_df = (
-    df.groupby("year")["average_rent"]
-    .mean()
-    .reset_index()
-)
+trend_df = df.groupby("year")["average_rent"].mean().reset_index()
 
 fig_trend = px.line(
     trend_df,
     x="year",
     y="average_rent",
     markers=True,
-    title="Average Rent Trend in Ireland"
+    title="Average Rent Trend in Ireland",
 )
 
 st.plotly_chart(fig_trend, use_container_width=True)
 
-# Raw data
 with st.expander("View Filtered Data"):
     st.dataframe(filtered_df)

@@ -1,12 +1,6 @@
 import streamlit as st
-import pandas as pd
 import plotly.express as px
-from src.db import engine
-
-st.set_page_config(
-    page_title="Housing Overview",
-    layout="wide"
-)
+from src.data import load_rental_data
 
 st.title("Ireland Housing Intelligence Overview")
 
@@ -15,22 +9,10 @@ This platform analyses Ireland's rental market using official RTB rental data.
 It helps identify rent trends, expensive locations, cheaper areas, and housing pressure patterns.
 """)
 
-df = pd.read_sql(
-    """
-    SELECT
-        year,
-        bedrooms,
-        property_type,
-        location,
-        average_rent
-    FROM rental_prices
-    WHERE average_rent IS NOT NULL
-    """,
-    engine
-)
+df = load_rental_data()
 
 if df.empty:
-    st.warning("No rental data found.")
+    st.warning("No rental data found. Check your database connection.")
     st.stop()
 
 # KPIs
@@ -68,30 +50,25 @@ st.divider()
 # Rent trend over time
 st.subheader("Average Rent Trend Over Time")
 
-trend_df = (
-    df.groupby("year")["average_rent"]
-    .mean()
-    .reset_index()
-)
+trend_df = df.groupby("year")["average_rent"].mean().reset_index()
 
 fig_trend = px.line(
     trend_df,
     x="year",
     y="average_rent",
     markers=True,
-    title="Average Rental Price Trend in Ireland"
+    title="Average Rental Price Trend in Ireland",
 )
 
 st.plotly_chart(fig_trend, use_container_width=True)
 
-# Two columns
 left_col, right_col = st.columns(2)
+
+latest_year = df["year"].max()
+latest_df = df[df["year"] == latest_year]
 
 with left_col:
     st.subheader("Top 10 Most Expensive Locations")
-
-    latest_year = df["year"].max()
-    latest_df = df[df["year"] == latest_year]
 
     top_expensive = (
         latest_df.groupby("location")["average_rent"]
@@ -106,7 +83,7 @@ with left_col:
         x="average_rent",
         y="location",
         orientation="h",
-        title=f"Most Expensive Locations in {latest_year}"
+        title=f"Most Expensive Locations in {latest_year}",
     )
 
     st.plotly_chart(fig_expensive, use_container_width=True)
@@ -118,7 +95,7 @@ with right_col:
         latest_df,
         x="average_rent",
         nbins=40,
-        title=f"Rent Distribution in {latest_year}"
+        title=f"Rent Distribution in {latest_year}",
     )
 
     st.plotly_chart(fig_hist, use_container_width=True)
@@ -137,7 +114,7 @@ fig_property = px.bar(
     property_df,
     x="property_type",
     y="average_rent",
-    title=f"Average Rent by Property Type in {latest_year}"
+    title=f"Average Rent by Property Type in {latest_year}",
 )
 
 st.plotly_chart(fig_property, use_container_width=True)
