@@ -1,9 +1,26 @@
+# Environment
 .env
+.env.*
+
+# Virtual Environment
+venv/
+.venv/
+
+# Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+
+# Jupyter
 .ipynb_checkpoints/
+
+# Data
 data/raw/
 data/processed/
+
+# Models
 models/*.pkl
+
+# Mac
 .DS_Store
-venv/
