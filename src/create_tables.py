@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS rental_prices (
 CREATE TABLE IF NOT EXISTS property_prices (
     id SERIAL PRIMARY KEY,
     county VARCHAR(100),
+    property_type VARCHAR(100),
     year INTEGER,
     month INTEGER,
     price_index NUMERIC(10,2),
