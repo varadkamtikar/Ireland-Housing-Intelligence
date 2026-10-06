@@ -11,3 +11,4 @@ xgboost
 geopandas
 folium
 streamlit-folium
+psycopg[binary]
