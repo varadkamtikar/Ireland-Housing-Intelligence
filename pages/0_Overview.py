@@ -9,7 +9,7 @@ This platform analyses Ireland's rental market using official RTB rental data.
 It helps identify rent trends, expensive locations, cheaper areas, and housing pressure patterns.
 """)
 
-df = load_rental_data()/
+df = load_rental_data()
 
 if df.empty:
     st.warning("No rental data found. Check your database connection.")
